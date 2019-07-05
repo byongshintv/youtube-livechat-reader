@@ -39,4 +39,4 @@ reader.on("error", snippet => console.log(snippet))
 reader.on("message", err => console.error(err))
 ```
 
-`message`이벤트에서 반환되는 리소스는 [liveChatMessages.list요청]('https://developers.google.com/youtube/v3/live/docs/liveChatMessages/list')으로 반환되는 값과 같습니다.
+`message`이벤트에서 반환되는 리소스는 [liveChatMessages]('https://developers.google.com/youtube/v3/live/docs/liveChatMessages/list')요청으로 반환되는 값과 같습니다.
