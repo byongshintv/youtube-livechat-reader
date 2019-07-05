@@ -1,6 +1,6 @@
 {
   "name": "youtube-livechat-reader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "license": "MIT",
   "dependencies": {
@@ -8,8 +8,6 @@
     "@types/core-js": "0.9.36",
     "@types/node": "^12.0.12",
     "google-auth-library": "^4.2.5",
-    "googleapis": "^40.0.1",
-    "play-sound": "^1.1.3",
-    "youtube-live-chat": "^1.0.3"
+    "googleapis": "^40.0.1"
   }
 }
