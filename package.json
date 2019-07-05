@@ -1,7 +1,7 @@
 {
-  "name": "youtube-message-tts-test",
+  "name": "youtube-livechat-reader",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "dependencies": {
     "@types/bluebird": "^3.5.27",
