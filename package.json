@@ -9,5 +9,8 @@
     "@types/node": "^12.0.12",
     "google-auth-library": "^4.2.5",
     "googleapis": "^40.0.1"
+  },
+  "scripts": {
+    "test":"node dist/test.js"
   }
 }
