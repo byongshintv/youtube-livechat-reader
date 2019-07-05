@@ -1,6 +1,4 @@
 # youtube-livechat-reader
-**아직 퍼블리시되지 않은 npm 라이브러리입니다. 등록까지 잠시만 기다려주세요.**
-
 [Youtube OAuth 2.0 Client](https://console.developers.google.com/apis/credentials)의 client_secrent파일으로 자신의 라이브 스트리밍 메세지를 가져올 수 있습니다.
 
 ES6과 Async-Await을 사용한 라이브러리이기에 버전 7.6이상의 nodejs가 필요합니다. 아래의 코드로 버전을 확인 해 주세요.
