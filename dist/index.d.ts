@@ -1,5 +1,10 @@
+/// <reference types="node" />
 import EventEmitter from 'events';
-declare class LiveChatEmitter extends EventEmitter {
+export declare class LiveChatEmitter extends EventEmitter {
+}
+export declare class LiveChatAPIError extends Error {
+}
+export declare class LiveChatAPIFirstExecuteError extends LiveChatAPIError {
 }
 interface MainProp {
     clientSecretPath?: string;

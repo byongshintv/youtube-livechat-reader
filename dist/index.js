@@ -16,10 +16,13 @@ const googleapis_1 = require("googleapis");
 const events_1 = __importDefault(require("events"));
 class LiveChatEmitter extends events_1.default {
 }
+exports.LiveChatEmitter = LiveChatEmitter;
 class LiveChatAPIError extends Error {
 }
+exports.LiveChatAPIError = LiveChatAPIError;
 class LiveChatAPIFirstExecuteError extends LiveChatAPIError {
 }
+exports.LiveChatAPIFirstExecuteError = LiveChatAPIFirstExecuteError;
 function getMessages(auth, liveChatId, messagePart) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((res, rej) => {
