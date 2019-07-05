@@ -5,10 +5,10 @@ import { GaxiosResponse } from "gaxios";
 import EventEmitter from 'events'
 
 
-class LiveChatEmitter extends EventEmitter{}
+export class LiveChatEmitter extends EventEmitter{}
 
-class LiveChatAPIError extends Error{}
-class LiveChatAPIFirstExecuteError extends LiveChatAPIError{}
+export class LiveChatAPIError extends Error{}
+export class LiveChatAPIFirstExecuteError extends LiveChatAPIError{}
 
 async function getMessages(auth:OAuth2Client,liveChatId:string,messagePart:string): Promise<youtube_v3.Schema$LiveChatMessage[]>{ return new Promise((res,rej) => {
     var service = google.youtube('v3');

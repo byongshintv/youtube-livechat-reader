@@ -21,7 +21,7 @@ var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json';
 export class LoadingSecretJSONError extends Error{}
 export class ReadingSecretJSONError extends Error{}
 
-interface AuthCredentail{
+export interface AuthCredentail{
   installed:{
     client_secret:string,
     client_id:string,
