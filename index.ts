@@ -32,7 +32,7 @@ async function getMessages(auth:OAuth2Client,liveChatId:string,messagePart:strin
 async function readLiveChat(emitter:LiveChatEmitter,auth:OAuth2Client,liveChatId:string,threadholes= 1000,messagePart){
         var getPublishAt = (message:youtube_v3.Schema$LiveChatMessage) =>  new Date(message.snippet.publishedAt)
         var prevMessages = await getMessages(auth,liveChatId,messagePart).catch(err => {throw new LiveChatAPIFirstExecuteError(err)}) // 마지막 
-        var lastTime:Date = getPublishAt(prevMessages[prevMessages.length - 1])
+        var lastTime:Date = prevMessages.length === 0 ? new Date() : getPublishAt(prevMessages[prevMessages.length - 1])
         emitter.emit("ready",liveChatId)
     
         var interval = setInterval(async () => {

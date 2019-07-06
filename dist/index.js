@@ -46,7 +46,7 @@ function readLiveChat(emitter, auth, liveChatId, threadholes = 1000, messagePart
     return __awaiter(this, void 0, void 0, function* () {
         var getPublishAt = (message) => new Date(message.snippet.publishedAt);
         var prevMessages = yield getMessages(auth, liveChatId, messagePart).catch(err => { throw new LiveChatAPIFirstExecuteError(err); }); // 마지막 
-        var lastTime = getPublishAt(prevMessages[prevMessages.length - 1]);
+        var lastTime = prevMessages.length === 0 ? new Date() : getPublishAt(prevMessages[prevMessages.length - 1]);
         emitter.emit("ready", liveChatId);
         var interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
             var nextMessage = yield getMessages(auth, liveChatId, messagePart);
