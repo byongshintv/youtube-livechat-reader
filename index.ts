@@ -3,12 +3,22 @@ import { authorize, LoadingSecretJSONError, ReadingSecretJSONError } from "./oat
 import { google, youtube_v3 } from "googleapis";
 import { GaxiosResponse } from "gaxios";
 import EventEmitter from 'events'
+import { Server } from "tls";
 
 
-export class LiveChatEmitter extends EventEmitter{}
+export class LiveChatEmitter extends EventEmitter{
+    private liveChatId:string
+    public setLiveChatId(liveChatId:string):any{
+        this.liveChatId = liveChatId;
+    }
+    public getLiveChatId():string{
+        return this.liveChatId;
+    }
+}
 
 export class LiveChatAPIError extends Error{}
 export class LiveChatAPIFirstExecuteError extends LiveChatAPIError{}
+var service = google.youtube('v3');
 
 type MessageList = youtube_v3.Schema$LiveChatMessage[]
 interface getMessagesReturn{
@@ -20,7 +30,7 @@ async function getMessages(
     ,pageToken?:string
     ): Promise<getMessagesReturn> { return new Promise((res,rej) => {
 
-    var service = google.youtube('v3');
+    
     const prop:youtube_v3.Params$Resource$Livechatmessages$List = {
         auth: auth,
         part:messagePart,
@@ -44,7 +54,7 @@ async function readLiveChat(emitter:LiveChatEmitter,auth:OAuth2Client,liveChatId
         var interval = setInterval(async () => {
             var {messages, nextPageToken: token} = await getMessages(auth,liveChatId,messagePart,nextPageToken)
             nextPageToken = token
-            messages.map(message => {
+            messages.reverse().map(message => {
                 emitter.emit("message",message)  
             })
         }, threadholes)
@@ -76,7 +86,7 @@ async function getLiveChatId(auth:OAuth2Client):Promise<string>{ return new Prom
         // 활성화중인 라이브가 없을 시 활성화 예정인 라이브 체크
         var items:BroadCastItems = response.data.items as BroadCastItems  
         if(items.length == 0){
-            console.log("There is no active broadcast. It will check the broadCast id to upload.")
+            ("There is no active broadcast. It will check the broadCast id to upload.")
             google.youtube('v3').liveBroadcasts.list({
                 ...requestProp,
                 broadcastStatus:"upcoming"
@@ -100,29 +110,58 @@ async function getLiveChatId(auth:OAuth2Client):Promise<string>{ return new Prom
     
 })}
 
+function setEventListenerToEmiiter(emitter:LiveChatEmitter,auth:OAuth2Client){
+
+
+    emitter.on("message", function(message){
+        service.liveChatMessages.insert({
+            auth,
+            part: "snippet",
+            requestBody:{
+                snippet:{              
+                    liveChatId: emitter.getLiveChatId(),
+                    type: "textMessageEvent",
+                    textMessageDetails:{
+                        messageText:message
+                    }
+                }
+            }
+                
+        
+        },(err,res) => {
+            //if(err) throw err
+        })
+    })
+}
+
 
 interface MainProp{
     clientSecretPath?:string, 
     liveChatId?:string,
     threshold?:number,
-    messagePart?:string
+    messagePart?:string,
+    tokenDir?:string
 }
 export default function main(prop:MainProp){
     prop = {
         clientSecretPath: 'client_secret.json',
         threshold:1000,
         messagePart:"snippet",
+        tokenDir:'.credentials/',
         ...prop
     }
-    let { clientSecretPath, liveChatId, threshold, messagePart } = prop
+    let { clientSecretPath, liveChatId, threshold, messagePart, tokenDir } = prop
     var emitter = new LiveChatEmitter();
 
     new Promise<void>(async function(res,rej){
         try{
 
-            var auth:OAuth2Client = await authorize(clientSecretPath)
+            var auth:OAuth2Client = await authorize(clientSecretPath,tokenDir)
+            setEventListenerToEmiiter(emitter,auth)
             liveChatId = liveChatId || await getLiveChatId(auth)
+            emitter.setLiveChatId( liveChatId );
             await readLiveChat(emitter, auth,liveChatId,threshold,messagePart)
+
         } catch(err){
             rej(err)
         } 

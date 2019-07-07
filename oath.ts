@@ -3,13 +3,13 @@ import readline from 'readline'
 import {google } from 'googleapis'
 import { OAuth2Client } from 'googleapis-common';
 import { Credentials } from 'google-auth-library';
+import path from 'path';
 var OAuth2 = google.auth.OAuth2;
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
-var TOKEN_DIR = '.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json';
+var SCOPES = ['https://www.googleapis.com/auth/youtube'];
+
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -28,7 +28,8 @@ export interface AuthCredentail{
     redirect_uris:string[]
   }
 }
-export async function authorize(filename:string):Promise<OAuth2Client> { return new Promise(res => {
+export async function authorize(filename:string,tokenDir:string):Promise<OAuth2Client> { return new Promise(res => {
+    var tokenPath = path.join(tokenDir,'private_key.json') ;
     let content:string;
     try{
         // Load client secrets from a local file.
@@ -50,9 +51,9 @@ export async function authorize(filename:string):Promise<OAuth2Client> { return 
   }
 
   // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, async function(err, token) {
+  fs.readFile(tokenPath, async function(err, token) {
     if (err) {
-      var oauth:OAuth2Client = await getNewToken(oauth2Client);
+      var oauth:OAuth2Client = await getNewToken(oauth2Client,tokenPath);
       res(oauth)
     } else {
       oauth2Client.credentials = JSON.parse(token.toString("UTF-8"));
@@ -69,7 +70,7 @@ export async function authorize(filename:string):Promise<OAuth2Client> { return 
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-async function getNewToken(oauth2Client:OAuth2Client):Promise<OAuth2Client> { return new Promise(res => {
+async function getNewToken(oauth2Client:OAuth2Client,tokenPath:string):Promise<OAuth2Client> { return new Promise(res => {
   var authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES
@@ -87,7 +88,7 @@ async function getNewToken(oauth2Client:OAuth2Client):Promise<OAuth2Client> { re
         return;
       }
       oauth2Client.credentials = token;
-      storeToken(token);
+      storeToken(token,tokenPath);
       res(oauth2Client);
     });
   });
@@ -98,18 +99,18 @@ async function getNewToken(oauth2Client:OAuth2Client):Promise<OAuth2Client> { re
  *
  * @param {Object} token The token to store to disk.
  */
-function storeToken(token:Credentials) {
+function storeToken(token:Credentials,tokenPath:string) {
   try {
-    fs.mkdirSync(TOKEN_DIR);
+    fs.mkdirSync(path.join(tokenPath,"../"));
   } catch (err) {
     if (err.code != 'EEXIST') {
       throw err;
     }
   }
-  fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+  fs.writeFile(tokenPath, JSON.stringify(token), (err) => {
     if (err) throw err;
-    console.log('Token stored to ' + TOKEN_PATH);
+    console.log('Token stored to ' + tokenPath);
   });
-  console.log('Token stored to ' + TOKEN_PATH);
+  console.log('Token stored to ' + tokenPath);
 }
 

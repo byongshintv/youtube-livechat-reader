@@ -17,4 +17,4 @@ export interface AuthCredentail {
         redirect_uris: string[];
     };
 }
-export declare function authorize(filename: string): Promise<OAuth2Client>;
+export declare function authorize(filename: string, tokenDir: string): Promise<OAuth2Client>;

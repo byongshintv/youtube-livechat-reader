@@ -14,12 +14,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const readline_1 = __importDefault(require("readline"));
 const googleapis_1 = require("googleapis");
+const path_1 = __importDefault(require("path"));
 var OAuth2 = googleapis_1.google.auth.OAuth2;
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/youtube-nodejs-quickstart.json
-var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
-var TOKEN_DIR = '.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'youtube-nodejs-quickstart.json';
+var SCOPES = ['https://www.googleapis.com/auth/youtube'];
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
  * given callback function.
@@ -33,9 +32,10 @@ exports.LoadingSecretJSONError = LoadingSecretJSONError;
 class ReadingSecretJSONError extends Error {
 }
 exports.ReadingSecretJSONError = ReadingSecretJSONError;
-function authorize(filename) {
+function authorize(filename, tokenDir) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise(res => {
+            var tokenPath = path_1.default.join(tokenDir, 'private_key.json');
             let content;
             try {
                 // Load client secrets from a local file.
@@ -57,10 +57,10 @@ function authorize(filename) {
                 throw new ReadingSecretJSONError(err);
             }
             // Check if we have previously stored a token.
-            fs_1.default.readFile(TOKEN_PATH, function (err, token) {
+            fs_1.default.readFile(tokenPath, function (err, token) {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (err) {
-                        var oauth = yield getNewToken(oauth2Client);
+                        var oauth = yield getNewToken(oauth2Client, tokenPath);
                         res(oauth);
                     }
                     else {
@@ -81,7 +81,7 @@ exports.authorize = authorize;
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-function getNewToken(oauth2Client) {
+function getNewToken(oauth2Client, tokenPath) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise(res => {
             var authUrl = oauth2Client.generateAuthUrl({
@@ -101,7 +101,7 @@ function getNewToken(oauth2Client) {
                         return;
                     }
                     oauth2Client.credentials = token;
-                    storeToken(token);
+                    storeToken(token, tokenPath);
                     res(oauth2Client);
                 });
             });
@@ -113,19 +113,19 @@ function getNewToken(oauth2Client) {
  *
  * @param {Object} token The token to store to disk.
  */
-function storeToken(token) {
+function storeToken(token, tokenPath) {
     try {
-        fs_1.default.mkdirSync(TOKEN_DIR);
+        fs_1.default.mkdirSync(path_1.default.join(tokenPath, "../"));
     }
     catch (err) {
         if (err.code != 'EEXIST') {
             throw err;
         }
     }
-    fs_1.default.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+    fs_1.default.writeFile(tokenPath, JSON.stringify(token), (err) => {
         if (err)
             throw err;
-        console.log('Token stored to ' + TOKEN_PATH);
+        console.log('Token stored to ' + tokenPath);
     });
-    console.log('Token stored to ' + TOKEN_PATH);
+    console.log('Token stored to ' + tokenPath);
 }
