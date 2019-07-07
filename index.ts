@@ -3,16 +3,42 @@ import { authorize, LoadingSecretJSONError, ReadingSecretJSONError } from "./oat
 import { google, youtube_v3 } from "googleapis";
 import { GaxiosResponse } from "gaxios";
 import EventEmitter from 'events'
-import { Server } from "tls";
 
+interface LiveChatEmitterDefaultData{
+    auth:OAuth2Client,
+    liveChatId:string
 
+}
 export class LiveChatEmitter extends EventEmitter{
     private liveChatId:string
-    public setLiveChatId(liveChatId:string):any{
-        this.liveChatId = liveChatId;
-    }
+    private auth:OAuth2Client
+
+
+    public setDefaultData(prop:LiveChatEmitterDefaultData){
+        this.liveChatId = prop.liveChatId;
+        this.auth = prop.auth;
+    };
+
     public getLiveChatId():string{
         return this.liveChatId;
+    }
+
+    public sendMessage(message:string,callback?:(err,res) => any):any{
+        var prop = {
+            auth:this.auth,
+            part: "snippet",
+            requestBody:{
+                snippet:{              
+                    liveChatId: this.getLiveChatId(),
+                    type: "textMessageEvent",
+                    textMessageDetails:{
+                        messageText:message
+                    }
+                }
+            }
+        }
+    
+        service.liveChatMessages.insert(prop,callback)
     }
 }
 
@@ -46,6 +72,7 @@ async function getMessages(
     });
 })}
 
+export type emit$message = youtube_v3.Schema$LiveChatMessage
 async function readLiveChat(emitter:LiveChatEmitter,auth:OAuth2Client,liveChatId:string,threadholes= 1000,messagePart){
         var { nextPageToken } = await getMessages(auth,liveChatId,messagePart).catch(err => {throw new LiveChatAPIFirstExecuteError(err)}) // 마지막 
 
@@ -54,7 +81,7 @@ async function readLiveChat(emitter:LiveChatEmitter,auth:OAuth2Client,liveChatId
         var interval = setInterval(async () => {
             var {messages, nextPageToken: token} = await getMessages(auth,liveChatId,messagePart,nextPageToken)
             nextPageToken = token
-            messages.reverse().map(message => {
+            messages.reverse().map((message:emit$message) => {
                 emitter.emit("message",message)  
             })
         }, threadholes)
@@ -110,31 +137,6 @@ async function getLiveChatId(auth:OAuth2Client):Promise<string>{ return new Prom
     
 })}
 
-function setEventListenerToEmiiter(emitter:LiveChatEmitter,auth:OAuth2Client){
-
-
-    emitter.on("message", function(message){
-        service.liveChatMessages.insert({
-            auth,
-            part: "snippet",
-            requestBody:{
-                snippet:{              
-                    liveChatId: emitter.getLiveChatId(),
-                    type: "textMessageEvent",
-                    textMessageDetails:{
-                        messageText:message
-                    }
-                }
-            }
-                
-        
-        },(err,res) => {
-            //if(err) throw err
-        })
-    })
-}
-
-
 interface MainProp{
     clientSecretPath?:string, 
     liveChatId?:string,
@@ -157,9 +159,8 @@ export default function main(prop:MainProp){
         try{
 
             var auth:OAuth2Client = await authorize(clientSecretPath,tokenDir)
-            setEventListenerToEmiiter(emitter,auth)
             liveChatId = liveChatId || await getLiveChatId(auth)
-            emitter.setLiveChatId( liveChatId );
+            emitter.setDefaultData({ auth, liveChatId });
             await readLiveChat(emitter, auth,liveChatId,threshold,messagePart)
 
         } catch(err){

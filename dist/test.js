@@ -6,11 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = __importDefault(require("./index"));
 var reader = index_1.default({
     threshold: 2000,
-    tokenDir: `E:\\project-honmono\\read-livechat-bytts\\dist\\.credentials`,
-    clientSecretPath: "E:\\project-honmono\\read-livechat-bytts\\dist\\client_secret.json"
+    tokenDir: "E:\\credential\\youtube",
+    clientSecretPath: "E:\\credential\\client_secret_vstv.json"
 });
+const testMessage = "hello vsTV!";
 reader.on("error", v => console.log(v));
-reader.on("message", v => console.log(v));
+reader.on("message", (v) => {
+    console.log(v);
+    if (v.snippet.textMessageDetails.messageText == testMessage)
+        console.log("TEST COMPLETE!!!");
+});
 reader.on("ready", v => {
-    reader.emit("message", "testMessage");
+    reader.sendMessage(testMessage);
 });

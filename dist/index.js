@@ -7,11 +7,29 @@ const oath_1 = require("./oath");
 const googleapis_1 = require("googleapis");
 const events_1 = __importDefault(require("events"));
 class LiveChatEmitter extends events_1.default {
-    setLiveChatId(liveChatId) {
-        this.liveChatId = liveChatId;
+    setDefaultData(prop) {
+        this.liveChatId = prop.liveChatId;
+        this.auth = prop.auth;
     }
+    ;
     getLiveChatId() {
         return this.liveChatId;
+    }
+    sendMessage(message, callback) {
+        var prop = {
+            auth: this.auth,
+            part: "snippet",
+            requestBody: {
+                snippet: {
+                    liveChatId: this.getLiveChatId(),
+                    type: "textMessageEvent",
+                    textMessageDetails: {
+                        messageText: message
+                    }
+                }
+            }
+        };
+        service.liveChatMessages.insert(prop, callback);
     }
 }
 exports.LiveChatEmitter = LiveChatEmitter;
@@ -46,7 +64,7 @@ async function readLiveChat(emitter, auth, liveChatId, threadholes = 1000, messa
     var interval = setInterval(async () => {
         var { messages, nextPageToken: token } = await getMessages(auth, liveChatId, messagePart, nextPageToken);
         nextPageToken = token;
-        messages.reverse().map(message => {
+        messages.reverse().map((message) => {
             emitter.emit("message", message);
         });
     }, threadholes);
@@ -93,25 +111,6 @@ async function getLiveChatId(auth) {
         }).catch((err) => { throw err; });
     });
 }
-function setEventListenerToEmiiter(emitter, auth) {
-    emitter.on("message", function (message) {
-        service.liveChatMessages.insert({
-            auth,
-            part: "snippet",
-            requestBody: {
-                snippet: {
-                    liveChatId: emitter.getLiveChatId(),
-                    type: "textMessageEvent",
-                    textMessageDetails: {
-                        messageText: message
-                    }
-                }
-            }
-        }, (err, res) => {
-            //if(err) throw err
-        });
-    });
-}
 function main(prop) {
     prop = Object.assign({ clientSecretPath: 'client_secret.json', threshold: 1000, messagePart: "snippet", tokenDir: '.credentials/' }, prop);
     let { clientSecretPath, liveChatId, threshold, messagePart, tokenDir } = prop;
@@ -119,9 +118,8 @@ function main(prop) {
     new Promise(async function (res, rej) {
         try {
             var auth = await oath_1.authorize(clientSecretPath, tokenDir);
-            setEventListenerToEmiiter(emitter, auth);
             liveChatId = liveChatId || await getLiveChatId(auth);
-            emitter.setLiveChatId(liveChatId);
+            emitter.setDefaultData({ auth, liveChatId });
             await readLiveChat(emitter, auth, liveChatId, threshold, messagePart);
         }
         catch (err) {
