@@ -10,41 +10,46 @@ export class LiveChatEmitter extends EventEmitter{}
 export class LiveChatAPIError extends Error{}
 export class LiveChatAPIFirstExecuteError extends LiveChatAPIError{}
 
-async function getMessages(auth:OAuth2Client,liveChatId:string,messagePart:string): Promise<youtube_v3.Schema$LiveChatMessage[]>{ return new Promise((res,rej) => {
+type MessageList = youtube_v3.Schema$LiveChatMessage[]
+interface getMessagesReturn{
+    messages: MessageList,
+    nextPageToken: string
+}
+async function getMessages(
+    auth:OAuth2Client,liveChatId:string,messagePart:string
+    ,pageToken?:string
+    ): Promise<getMessagesReturn> { return new Promise((res,rej) => {
+
     var service = google.youtube('v3');
-    service.liveChatMessages.list({
-      auth: auth,
-      part:messagePart,
-      liveChatId,
+    const prop:youtube_v3.Params$Resource$Livechatmessages$List = {
+        auth: auth,
+        part:messagePart,
+        liveChatId,
+    }
+    if(pageToken !== undefined) prop.pageToken = pageToken;
 
-
-    }, function(err, response) {
-      if (err) {
-        rej(err)
-      } else {
-        res(response.data.items)
-
-      }
-
+    service.liveChatMessages.list(prop, (err, response) => {
+        if(err) throw err
+        var nextPageToken = response.data.nextPageToken
+        var messages = response.data.items
+        res({ nextPageToken, messages})
     });
 })}
 
 async function readLiveChat(emitter:LiveChatEmitter,auth:OAuth2Client,liveChatId:string,threadholes= 1000,messagePart){
-        var getPublishAt = (message:youtube_v3.Schema$LiveChatMessage) =>  new Date(message.snippet.publishedAt)
-        var prevMessages = await getMessages(auth,liveChatId,messagePart).catch(err => {throw new LiveChatAPIFirstExecuteError(err)}) // 마지막 
-        var lastTime:Date = prevMessages.length === 0 ? new Date() : getPublishAt(prevMessages[prevMessages.length - 1])
+        var { nextPageToken } = await getMessages(auth,liveChatId,messagePart).catch(err => {throw new LiveChatAPIFirstExecuteError(err)}) // 마지막 
+
         emitter.emit("ready",liveChatId)
     
         var interval = setInterval(async () => {
-            var nextMessage = await getMessages(auth,liveChatId,messagePart)
-            nextMessage.map(message => {
-                var publishedAt:Date = getPublishAt(message)
-                if( publishedAt <= lastTime) return; //가장 마지막에 읽힌 메세지보다 이전의 메세지인 경우
-                lastTime = publishedAt
+            var {messages, nextPageToken: token} = await getMessages(auth,liveChatId,messagePart,nextPageToken)
+            nextPageToken = token
+            messages.map(message => {
                 emitter.emit("message",message)  
             })
         }, threadholes)
 
+        emitter.on("stop", () => clearInterval(interval))
 
 }
 

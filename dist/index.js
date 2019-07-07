@@ -23,41 +23,39 @@ exports.LiveChatAPIError = LiveChatAPIError;
 class LiveChatAPIFirstExecuteError extends LiveChatAPIError {
 }
 exports.LiveChatAPIFirstExecuteError = LiveChatAPIFirstExecuteError;
-function getMessages(auth, liveChatId, messagePart) {
+function getMessages(auth, liveChatId, messagePart, pageToken) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((res, rej) => {
             var service = googleapis_1.google.youtube('v3');
-            service.liveChatMessages.list({
+            const prop = {
                 auth: auth,
                 part: messagePart,
                 liveChatId,
-            }, function (err, response) {
-                if (err) {
-                    rej(err);
-                }
-                else {
-                    res(response.data.items);
-                }
+            };
+            if (pageToken !== undefined)
+                prop.pageToken = pageToken;
+            service.liveChatMessages.list(prop, (err, response) => {
+                if (err)
+                    throw err;
+                var nextPageToken = response.data.nextPageToken;
+                var messages = response.data.items;
+                res({ nextPageToken, messages });
             });
         });
     });
 }
 function readLiveChat(emitter, auth, liveChatId, threadholes = 1000, messagePart) {
     return __awaiter(this, void 0, void 0, function* () {
-        var getPublishAt = (message) => new Date(message.snippet.publishedAt);
-        var prevMessages = yield getMessages(auth, liveChatId, messagePart).catch(err => { throw new LiveChatAPIFirstExecuteError(err); }); // 마지막 
-        var lastTime = prevMessages.length === 0 ? new Date() : getPublishAt(prevMessages[prevMessages.length - 1]);
+        var { nextPageToken } = yield getMessages(auth, liveChatId, messagePart).catch(err => { throw new LiveChatAPIFirstExecuteError(err); }); // 마지막 
         emitter.emit("ready", liveChatId);
         var interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
-            var nextMessage = yield getMessages(auth, liveChatId, messagePart);
-            nextMessage.map(message => {
-                var publishedAt = getPublishAt(message);
-                if (publishedAt <= lastTime)
-                    return; //가장 마지막에 읽힌 메세지보다 이전의 메세지인 경우
-                lastTime = publishedAt;
+            var { messages, nextPageToken: token } = yield getMessages(auth, liveChatId, messagePart, nextPageToken);
+            nextPageToken = token;
+            messages.map(message => {
                 emitter.emit("message", message);
             });
         }), threadholes);
+        emitter.on("stop", () => clearInterval(interval));
     });
 }
 function getLiveChatId(auth) {
