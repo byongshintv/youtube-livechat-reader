@@ -15,6 +15,9 @@ class LiveChatEmitter extends events_1.default {
     getLiveChatId() {
         return this.liveChatId;
     }
+    getOauth() {
+        return this.auth;
+    }
     sendMessage(message, callback) {
         var prop = {
             auth: this.auth,

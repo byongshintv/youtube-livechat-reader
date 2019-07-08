@@ -44,13 +44,25 @@ reader.on("message", err => console.error(err))
 
 
 ## 사용방법
-패키지의 기본함수를 실행했을때 반환되는 `EventEmitter`객체는 여러가지 이벤트를 읽어들이고 있습니다. 이를 이용해 유튜브 관리에 도움되는 각종 작업을 할 수 있습니다.
+패키지의 기본함수를 실행했을때 반환되는 `EventEmitter`객체는 이벤트를 제공하는것 외에도 여러가지 동작을 수행할 수 있습니다. 
 
-### 메세지 전송
-준비가 된 `EventEmiiter`객체는 `message`이벤트를 처리할 수 있습니다. 해당 이벤트로 접속중인 채팅방에 메세지를 보낼 수 있습니다.
+### 메세지 전송(sendMessage)
+`ready`이벤트가 정상적으로 emit된 `EventEmiiter`객체는 `sendMessage`메서드를 통해 접속중인 채팅방에 메세지를 전송할 수 있습니다.  
+
+`reader.sendMessage(message:string, callback?:(err, res) )`와 같이 사용할 수 있습니다.
+
 ```
-let livechatReader = require('youtube-livechat-reader')
-livechatReader.on("ready", v => {
-    livechatReader.emit("message","testMessage")
+var reader = Reader()
+
+const testMessage = "hello vsTV!"
+reader.on("message", (v:emit$message) => {
+    console.log(v)
+    if(v.snippet.textMessageDetails.messageText == testMessage)
+        console.log("TEST COMPLETE!!!")
+})
+
+reader.on("ready", v => {
+    console.log(v + " is ready~")
+    reader.sendMessage(testMessage)
 })
 ```

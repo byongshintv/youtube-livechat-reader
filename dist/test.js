@@ -17,5 +17,6 @@ reader.on("message", (v) => {
         console.log("TEST COMPLETE!!!");
 });
 reader.on("ready", v => {
+    console.log(v + " is ready~");
     reader.sendMessage(testMessage);
 });

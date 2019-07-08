@@ -23,6 +23,10 @@ export class LiveChatEmitter extends EventEmitter{
         return this.liveChatId;
     }
 
+    public getOauth():OAuth2Client{
+        return this.auth;
+    }
+
     public sendMessage(message:string,callback?:(err,res) => any):any{
         var prop = {
             auth:this.auth,

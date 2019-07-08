@@ -11,6 +11,7 @@ export declare class LiveChatEmitter extends EventEmitter {
     private auth;
     setDefaultData(prop: LiveChatEmitterDefaultData): void;
     getLiveChatId(): string;
+    getOauth(): OAuth2Client;
     sendMessage(message: string, callback?: (err: any, res: any) => any): any;
 }
 export declare class LiveChatAPIError extends Error {
